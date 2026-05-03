@@ -1,0 +1,13 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.validate": ["javascript", "javascriptreact"],
+  "editor.tabSize": 2,
+  "editor.wordWrap": "on",
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact"
+  }
+}

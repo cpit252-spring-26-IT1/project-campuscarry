@@ -1,0 +1,15 @@
+.git
+.github
+.vscode
+target
+*.log
+HELP.md
+
+.env
+.env.*
+!.env.example
+firebase-service-account*.json
+secrets/
+
+.DS_Store
+**/.DS_Store

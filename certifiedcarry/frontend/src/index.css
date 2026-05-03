@@ -1,0 +1,176 @@
+@import "@fontsource/manrope/latin-400.css";
+@import "@fontsource/manrope/latin-600.css";
+@import "@fontsource/manrope/latin-700.css";
+@import "@fontsource/orbitron/latin-700.css";
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  .font-display {
+    font-family: "Orbitron", ui-sans-serif, sans-serif;
+  }
+
+  body {
+    @apply bg-[#eaf4f4] font-sans text-base leading-relaxed tracking-[0.01em] text-[#1d1d1d] dark:bg-[#1d1d1d] dark:text-[#cae9ea];
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+
+  html[lang="ar"] body,
+  html[lang="ar"] button,
+  html[lang="ar"] input,
+  html[lang="ar"] select,
+  html[lang="ar"] textarea {
+    font-family: "Manrope", "Cairo", "Tajawal", ui-sans-serif, sans-serif;
+    letter-spacing: 0;
+  }
+
+  html[lang="ar"] body {
+    text-align: right;
+  }
+
+  /* In Arabic mode, keep centered elements centered but force left-aligned utilities to right. */
+  html[lang="ar"] [class~="text-left"],
+  html[lang="ar"] [class^="text-left"],
+  html[lang="ar"] [class*=" text-left"],
+  html[lang="ar"] [class*=":text-left"] {
+    text-align: right !important;
+  }
+
+  html[lang="ar"] [class~="text-center"],
+  html[lang="ar"] [class^="text-center"],
+  html[lang="ar"] [class*=" text-center"],
+  html[lang="ar"] [class*=":text-center"] {
+    text-align: center !important;
+  }
+
+  html[lang="ar"] input,
+  html[lang="ar"] select,
+  html[lang="ar"] textarea {
+    text-align: right;
+  }
+
+  html[lang="ar"] input::placeholder,
+  html[lang="ar"] textarea::placeholder {
+    text-align: right;
+  }
+
+  html[lang="ar"] .font-display,
+  html[lang="ar"] .cc-title-hero,
+  html[lang="ar"] .cc-title-section,
+  html[lang="ar"] .cc-title-card {
+    font-family: "Orbitron", "Cairo", "Tajawal", ui-sans-serif, sans-serif;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .cc-page-host > section,
+  .cc-page-host > div,
+  .cc-page-host > main,
+  .cc-page-host > article {
+    background-color: transparent !important;
+  }
+
+  .cc-title-hero {
+    font-family: "Orbitron", ui-sans-serif, sans-serif;
+    @apply text-4xl font-bold leading-tight tracking-tight md:text-5xl;
+  }
+
+  .cc-title-section {
+    font-family: "Manrope", ui-sans-serif, sans-serif;
+    @apply text-2xl font-bold leading-tight tracking-tight md:text-3xl;
+  }
+
+  .cc-title-card {
+    font-family: "Manrope", ui-sans-serif, sans-serif;
+    @apply text-xl font-semibold leading-snug tracking-tight;
+  }
+
+  .cc-body-lead {
+    @apply text-base leading-relaxed md:text-lg;
+  }
+
+  .cc-body-muted {
+    @apply text-sm leading-relaxed;
+  }
+
+  .cc-button-text {
+    @apply font-semibold tracking-wide;
+  }
+
+  .cc-home-shell {
+    background:
+      radial-gradient(1100px 440px at 6% -18%, rgba(201, 119, 59, 0.2), transparent 62%),
+      radial-gradient(920px 380px at 98% -15%, rgba(32, 140, 140, 0.22), transparent 58%);
+    border-radius: 1.35rem;
+    padding: 0.35rem;
+  }
+
+  .dark .cc-home-shell {
+    background:
+      radial-gradient(1100px 440px at 6% -18%, rgba(201, 119, 59, 0.13), transparent 62%),
+      radial-gradient(920px 380px at 98% -15%, rgba(32, 140, 140, 0.18), transparent 58%);
+  }
+
+  .cc-home-editorial-card {
+    border: 1px solid rgba(201, 119, 59, 0.35);
+    box-shadow: 0 18px 44px rgba(39, 59, 64, 0.2);
+  }
+
+  .dark .cc-home-editorial-card {
+    border-color: rgba(201, 119, 59, 0.38);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.32);
+  }
+
+  .cc-dashboard-shell {
+    background:
+      linear-gradient(180deg, rgba(60, 71, 72, 0.05), rgba(60, 71, 72, 0)),
+      repeating-linear-gradient(
+        90deg,
+        rgba(60, 71, 72, 0.035) 0,
+        rgba(60, 71, 72, 0.035) 1px,
+        transparent 1px,
+        transparent 28px
+      );
+    border-radius: 1.1rem;
+    padding: 0.35rem;
+  }
+
+  .dark .cc-dashboard-shell {
+    background:
+      linear-gradient(180deg, rgba(202, 233, 234, 0.04), rgba(202, 233, 234, 0)),
+      repeating-linear-gradient(
+        90deg,
+        rgba(202, 233, 234, 0.045) 0,
+        rgba(202, 233, 234, 0.045) 1px,
+        transparent 1px,
+        transparent 28px
+      );
+  }
+
+  .cc-dashboard-panel {
+    border: 1px solid rgba(60, 71, 72, 0.24);
+    box-shadow: 0 10px 26px rgba(39, 59, 64, 0.15);
+  }
+
+  .dark .cc-dashboard-panel {
+    border-color: rgba(202, 233, 234, 0.22);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.26);
+  }
+}

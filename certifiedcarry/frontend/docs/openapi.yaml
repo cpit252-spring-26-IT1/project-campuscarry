@@ -1,0 +1,1254 @@
+openapi: 3.0.3
+info:
+  title: CertifiedCarry API (Starter Contract)
+  version: 0.2.0
+  description: |
+    Starter OpenAPI contract generated from the current frontend integration surface
+    against the Spring Boot backend.
+
+    As endpoints evolve, update this contract alongside frontend service changes.
+  license:
+    name: Proprietary
+
+servers:
+  - url: /api
+    description: Default proxied API base (Vite dev proxy and production reverse proxy)
+
+tags:
+  - name: Auth
+    description: Authenticated user/session identity metadata.
+  - name: Users
+    description: User lifecycle and status management.
+  - name: Profiles
+    description: Player profile and rank-verification profile state.
+  - name: Pending
+    description: Pending recruiter and rank verification workflows.
+  - name: Leaderboard
+    description: Approved leaderboard entries.
+  - name: Chat
+    description: Chat thread and message resources.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /users:
+    get:
+      tags: [Users]
+      summary: List users
+      description: Supports query filtering used by the current frontend.
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: string
+          description: Exact user id filter
+        - in: query
+          name: role
+          schema:
+            $ref: "#/components/schemas/UserRole"
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/UserStatus"
+      responses:
+        "200":
+          description: User list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      tags: [Users]
+      summary: Create user
+      description: |
+        Used by registration flows for player and recruiter creation.
+        Registration requests must include legal consent acceptance metadata.
+        When an Authorization bearer token is supplied, backend binds firebaseUid
+        only when the token email is verified and matches the submitted login email.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateRequest"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Resolve authenticated actor context
+      description: Returns Firebase and backend-link context inferred from the bearer token.
+      responses:
+        "200":
+          description: Actor context
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthMeResponse"
+
+  /users/{userId}:
+    patch:
+      tags: [Users]
+      summary: Patch user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPatchRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags: [Users]
+      summary: Delete user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: User deleted
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /player_profiles:
+    get:
+      tags: [Profiles]
+      summary: List player profiles
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+          description: Exact user id filter
+      responses:
+        "200":
+          description: Player profile list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlayerProfile"
+    post:
+      tags: [Profiles]
+      summary: Create player profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerProfileCreateRequest"
+      responses:
+        "201":
+          description: Created player profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerProfile"
+
+  /player_profiles/{profileId}:
+    patch:
+      tags: [Profiles]
+      summary: Patch player profile
+      parameters:
+        - in: path
+          name: profileId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerProfilePatchRequest"
+      responses:
+        "200":
+          description: Updated player profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerProfile"
+        "404":
+          description: Profile not found
+
+  /pending_recruiters:
+    get:
+      tags: [Pending]
+      summary: List pending recruiter records
+      responses:
+        "200":
+          description: Pending recruiter list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PendingRecruiter"
+    post:
+      tags: [Pending]
+      summary: Create pending recruiter record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PendingRecruiterCreateRequest"
+      responses:
+        "201":
+          description: Created pending recruiter record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingRecruiter"
+
+  /pending_recruiters/{pendingRecruiterId}:
+    delete:
+      tags: [Pending]
+      summary: Delete pending recruiter record
+      parameters:
+        - in: path
+          name: pendingRecruiterId
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Record not found
+
+  /pending_ranks:
+    get:
+      tags: [Pending]
+      summary: List pending rank submissions
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/PendingRankStatus"
+      responses:
+        "200":
+          description: Pending rank list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PendingRank"
+    post:
+      tags: [Pending]
+      summary: Create pending rank submission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PendingRankCreateRequest"
+      responses:
+        "201":
+          description: Created pending rank
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingRank"
+
+  /pending_ranks/{pendingRankId}:
+    patch:
+      tags: [Pending]
+      summary: Patch pending rank submission
+      parameters:
+        - in: path
+          name: pendingRankId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PendingRankPatchRequest"
+      responses:
+        "200":
+          description: Updated pending rank
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingRank"
+    delete:
+      tags: [Pending]
+      summary: Delete pending rank submission
+      parameters:
+        - in: path
+          name: pendingRankId
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Record not found
+
+  /leaderboard:
+    get:
+      tags: [Leaderboard]
+      summary: List leaderboard rows
+      responses:
+        "200":
+          description: Leaderboard list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+    post:
+      tags: [Leaderboard]
+      summary: Create leaderboard row
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaderboardEntryCreateRequest"
+      responses:
+        "201":
+          description: Created leaderboard row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardEntry"
+
+  /leaderboard/{leaderboardId}:
+    patch:
+      tags: [Leaderboard]
+      summary: Patch leaderboard row
+      parameters:
+        - in: path
+          name: leaderboardId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaderboardEntryPatchRequest"
+      responses:
+        "200":
+          description: Updated leaderboard row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardEntry"
+    delete:
+      tags: [Leaderboard]
+      summary: Delete leaderboard row
+      parameters:
+        - in: path
+          name: leaderboardId
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Record not found
+
+  /chat_threads:
+    get:
+      tags: [Chat]
+      summary: List chat threads
+      description: |
+        Returns only conversations visible to the authenticated actor.
+        Admin users receive all conversations for moderation, while non-admin users
+        only receive conversations where their user id is a participant.
+      responses:
+        "200":
+          description: Chat thread list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatThread"
+    post:
+      tags: [Chat]
+      summary: Create chat thread
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatThreadCreateRequest"
+      responses:
+        "201":
+          description: Created chat thread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatThread"
+
+  /chat_threads/{threadId}:
+    patch:
+      tags: [Chat]
+      summary: Patch chat thread
+      parameters:
+        - in: path
+          name: threadId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatThreadPatchRequest"
+      responses:
+        "200":
+          description: Updated chat thread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatThread"
+
+  /chat_messages:
+    get:
+      tags: [Chat]
+      summary: List chat messages
+      description: |
+        Returns only messages visible to the authenticated actor.
+        Admin users receive all messages for moderation, while non-admin users
+        only receive messages that belong to conversations where their user id
+        is a participant.
+      responses:
+        "200":
+          description: Chat message list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+    post:
+      tags: [Chat]
+      summary: Create chat message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageCreateRequest"
+      responses:
+        "201":
+          description: Created chat message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+
+  /chat_messages/{messageId}:
+    patch:
+      tags: [Chat]
+      summary: Patch chat message
+      parameters:
+        - in: path
+          name: messageId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessagePatchRequest"
+      responses:
+        "200":
+          description: Updated chat message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    AuthMeResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        firebaseUid:
+          type: string
+          nullable: true
+        firebaseEmail:
+          type: string
+          nullable: true
+        backendUserId:
+          type: string
+          nullable: true
+        backendUserRole:
+          type: string
+          nullable: true
+        principal:
+          type: string
+          nullable: true
+      required: [authenticated]
+
+    UserRole:
+      type: string
+      enum: [PLAYER, RECRUITER, ADMIN]
+
+    UserStatus:
+      type: string
+      enum: [PENDING, APPROVED, DECLINED]
+
+    ConsentLocale:
+      type: string
+      enum: [en, ar]
+
+    LegalConsentSource:
+      type: string
+      enum: [REGISTER_PAGE, RECONSENT_GATE]
+
+    PendingRankStatus:
+      type: string
+      enum: [PENDING, APPROVED, DECLINED]
+
+    RocketLeagueMode:
+      type: object
+      properties:
+        mode:
+          type: string
+          example: 2v2
+        rank:
+          type: string
+        ratingValue:
+          type: number
+          nullable: true
+        ratingLabel:
+          type: string
+          example: MMR
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        fullName:
+          type: string
+        username:
+          type: string
+          nullable: true
+        personalEmail:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        organizationName:
+          type: string
+          nullable: true
+        password:
+          type: string
+          nullable: true
+        role:
+          $ref: "#/components/schemas/UserRole"
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        declineReason:
+          type: string
+          nullable: true
+        declinedAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        legalConsentAccepted:
+          type: boolean
+          nullable: true
+        legalConsentAcceptedAt:
+          type: string
+          format: date-time
+          nullable: true
+        legalConsentLocale:
+          allOf:
+            - $ref: "#/components/schemas/ConsentLocale"
+          nullable: true
+        legalConsentSource:
+          allOf:
+            - $ref: "#/components/schemas/LegalConsentSource"
+          nullable: true
+        termsVersionAccepted:
+          type: string
+          nullable: true
+        privacyVersionAccepted:
+          type: string
+          nullable: true
+      required: [id, fullName, role, status]
+
+    UserCreateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Optional during migration; clients may send explicit ids.
+        fullName:
+          type: string
+        username:
+          type: string
+          nullable: true
+        personalEmail:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        organizationName:
+          type: string
+          nullable: true
+        password:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        declineReason:
+          type: string
+          nullable: true
+        declinedAt:
+          type: string
+          format: date-time
+          nullable: true
+        legalConsentAccepted:
+          type: boolean
+        legalConsentAcceptedAt:
+          type: string
+          format: date-time
+        legalConsentLocale:
+          $ref: "#/components/schemas/ConsentLocale"
+        legalConsentSource:
+          $ref: "#/components/schemas/LegalConsentSource"
+        termsVersionAccepted:
+          type: string
+        privacyVersionAccepted:
+          type: string
+      required:
+        [
+          fullName,
+          password,
+          role,
+          legalConsentAccepted,
+          legalConsentAcceptedAt,
+          legalConsentLocale,
+          legalConsentSource,
+          termsVersionAccepted,
+          privacyVersionAccepted,
+        ]
+
+    UserPatchRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        username:
+          type: string
+          nullable: true
+        personalEmail:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        organizationName:
+          type: string
+          nullable: true
+        password:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        declineReason:
+          type: string
+          nullable: true
+        declinedAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        legalConsentAccepted:
+          type: boolean
+        legalConsentAcceptedAt:
+          type: string
+          format: date-time
+        legalConsentLocale:
+          $ref: "#/components/schemas/ConsentLocale"
+        legalConsentSource:
+          $ref: "#/components/schemas/LegalConsentSource"
+        termsVersionAccepted:
+          type: string
+        privacyVersionAccepted:
+          type: string
+
+    PlayerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        username:
+          type: string
+        profileImage:
+          type: string
+        game:
+          type: string
+        rank:
+          type: string
+        allowPlayerChats:
+          type: boolean
+        isWithTeam:
+          type: boolean
+        teamName:
+          type: string
+          nullable: true
+        rocketLeagueModes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RocketLeagueMode"
+        primaryRocketLeagueMode:
+          type: string
+        inGameRoles:
+          type: array
+          items:
+            type: string
+        inGameRole:
+          type: string
+        ratingValue:
+          type: number
+          nullable: true
+        ratingLabel:
+          type: string
+        proofImage:
+          type: string
+        bio:
+          type: string
+        clipsUrl:
+          type: string
+        rankVerificationStatus:
+          type: string
+          enum: [NOT_SUBMITTED, PENDING, APPROVED, DECLINED]
+        declineReason:
+          type: string
+        declinedAt:
+          type: string
+          format: date-time
+          nullable: true
+        isVerified:
+          type: boolean
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, userId, username]
+
+    PlayerProfileCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/PlayerProfilePatchRequest"
+        - type: object
+          required: [userId, username]
+
+    PlayerProfilePatchRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        username:
+          type: string
+        profileImage:
+          type: string
+        game:
+          type: string
+        rank:
+          type: string
+        allowPlayerChats:
+          type: boolean
+        isWithTeam:
+          type: boolean
+        teamName:
+          type: string
+          nullable: true
+        rocketLeagueModes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RocketLeagueMode"
+        primaryRocketLeagueMode:
+          type: string
+        inGameRoles:
+          type: array
+          items:
+            type: string
+        inGameRole:
+          type: string
+        ratingValue:
+          type: number
+          nullable: true
+        ratingLabel:
+          type: string
+        proofImage:
+          type: string
+        bio:
+          type: string
+        clipsUrl:
+          type: string
+        rankVerificationStatus:
+          type: string
+          enum: [NOT_SUBMITTED, PENDING, APPROVED, DECLINED]
+        declineReason:
+          type: string
+        declinedAt:
+          type: string
+          format: date-time
+          nullable: true
+        isVerified:
+          type: boolean
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PendingRecruiter:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+        linkedinUrl:
+          type: string
+        organizationName:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        legalConsentAcceptedAt:
+          type: string
+          format: date-time
+          nullable: true
+        legalConsentLocale:
+          allOf:
+            - $ref: "#/components/schemas/ConsentLocale"
+          nullable: true
+        termsVersionAccepted:
+          type: string
+          nullable: true
+        privacyVersionAccepted:
+          type: string
+          nullable: true
+      required: [id, userId, fullName, email, linkedinUrl, organizationName]
+
+    PendingRecruiterCreateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+        linkedinUrl:
+          type: string
+        organizationName:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+        legalConsentAcceptedAt:
+          type: string
+          format: date-time
+        legalConsentLocale:
+          $ref: "#/components/schemas/ConsentLocale"
+        termsVersionAccepted:
+          type: string
+        privacyVersionAccepted:
+          type: string
+      required:
+        [
+          userId,
+          fullName,
+          email,
+          linkedinUrl,
+          organizationName,
+          legalConsentAcceptedAt,
+          legalConsentLocale,
+          termsVersionAccepted,
+          privacyVersionAccepted,
+        ]
+
+    PendingRank:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        username:
+          type: string
+        fullName:
+          type: string
+        game:
+          type: string
+        claimedRank:
+          type: string
+        inGameRoles:
+          type: array
+          items:
+            type: string
+        inGameRole:
+          type: string
+        ratingValue:
+          type: number
+          nullable: true
+        ratingLabel:
+          type: string
+        rocketLeagueModes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RocketLeagueMode"
+        primaryRocketLeagueMode:
+          type: string
+        proofImage:
+          type: string
+        status:
+          $ref: "#/components/schemas/PendingRankStatus"
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        declineReason:
+          type: string
+          nullable: true
+        editedAfterDecline:
+          type: boolean
+        editedAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, userId, game, claimedRank]
+
+    PendingRankCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/PendingRankPatchRequest"
+        - type: object
+          required: [userId, game, claimedRank]
+
+    PendingRankPatchRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        username:
+          type: string
+        fullName:
+          type: string
+        game:
+          type: string
+        claimedRank:
+          type: string
+        inGameRoles:
+          type: array
+          items:
+            type: string
+        inGameRole:
+          type: string
+        ratingValue:
+          type: number
+          nullable: true
+        ratingLabel:
+          type: string
+        rocketLeagueModes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RocketLeagueMode"
+        primaryRocketLeagueMode:
+          type: string
+        proofImage:
+          type: string
+        status:
+          $ref: "#/components/schemas/PendingRankStatus"
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        declineReason:
+          type: string
+          nullable: true
+        editedAfterDecline:
+          type: boolean
+        editedAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        username:
+          type: string
+        game:
+          type: string
+        rank:
+          type: string
+        role:
+          type: string
+        ratingValue:
+          type: number
+          nullable: true
+        ratingLabel:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, userId, username, game, rank]
+
+    LeaderboardEntryCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/LeaderboardEntryPatchRequest"
+        - type: object
+          required: [userId, username, game, rank]
+
+    LeaderboardEntryPatchRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        username:
+          type: string
+        game:
+          type: string
+        rank:
+          type: string
+        role:
+          type: string
+        ratingValue:
+          type: number
+          nullable: true
+        ratingLabel:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    ChatThread:
+      type: object
+      properties:
+        id:
+          type: string
+        participantIds:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: string
+        initiatedById:
+          type: string
+        initiatedByRole:
+          $ref: "#/components/schemas/UserRole"
+        lastSenderId:
+          type: string
+          nullable: true
+        lastMessageAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastMessagePreview:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, participantIds, initiatedById, initiatedByRole, createdAt, updatedAt]
+
+    ChatThreadCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/ChatThreadPatchRequest"
+        - type: object
+          required: [participantIds, initiatedById, initiatedByRole, createdAt, updatedAt]
+
+    ChatThreadPatchRequest:
+      type: object
+      properties:
+        participantIds:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: string
+        initiatedById:
+          type: string
+        initiatedByRole:
+          $ref: "#/components/schemas/UserRole"
+        lastSenderId:
+          type: string
+          nullable: true
+        lastMessageAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastMessagePreview:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        threadId:
+          type: string
+        senderId:
+          type: string
+        recipientId:
+          type: string
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, threadId, senderId, recipientId, body, createdAt]
+
+    ChatMessageCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/ChatMessagePatchRequest"
+        - type: object
+          required: [threadId, senderId, recipientId, body, createdAt]
+
+    ChatMessagePatchRequest:
+      type: object
+      properties:
+        threadId:
+          type: string
+        senderId:
+          type: string
+        recipientId:
+          type: string
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
