@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="certifiedcarry/frontend/src/assets/images/logo-darkmode.svg" alt="CertifiedCarry" width="220" />
+  <img src="frontend/src/assets/images/logo-darkmode.svg" alt="CertifiedCarry" width="220" />
 </p>
 
 <h1 align="center">CertifiedCarry</h1>
