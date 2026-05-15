@@ -13,7 +13,7 @@ import {
   resendPendingSignupVerificationEmail,
 } from "../services/authService";
 import { isFirebaseConfigured } from "../services/firebaseClient";
-import { logoutFromFirebase } from "../services/firebaseAuthService";
+import { logoutFromFirebase, observeFirebaseAuthState } from "../services/firebaseAuthService";
 import authEventSubject from "../patterns/observer/AuthEventSubject";
 
 const AuthProvider = ({ children }) => {
@@ -23,27 +23,38 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     let isActive = true;
+    let hasResolvedInitialAuthState = false;
 
     const hydrateAuthSession = async () => {
       try {
         const restoredSession = await restoreAuthenticatedSession();
-        if (!isActive || !restoredSession) {
+        if (!isActive) {
+          return;
+        }
+
+        if (!restoredSession) {
+          setToken(null);
+          setUser(null);
           return;
         }
 
         setToken(restoredSession.token);
         setUser(restoredSession.user);
       } finally {
-        if (isActive) {
+        if (isActive && !hasResolvedInitialAuthState) {
+          hasResolvedInitialAuthState = true;
           setAuthReady(true);
         }
       }
     };
 
-    hydrateAuthSession();
+    const unsubscribe = observeFirebaseAuthState(() => {
+      void hydrateAuthSession();
+    });
 
     return () => {
       isActive = false;
+      unsubscribe();
     };
   }, []);
 
