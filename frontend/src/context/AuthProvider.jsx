@@ -48,6 +48,14 @@ const AuthProvider = ({ children }) => {
       }
     };
 
+    if (!isFirebaseConfigured()) {
+      void hydrateAuthSession();
+
+      return () => {
+        isActive = false;
+      };
+    }
+
     const unsubscribe = observeFirebaseAuthState(() => {
       void hydrateAuthSession();
     });

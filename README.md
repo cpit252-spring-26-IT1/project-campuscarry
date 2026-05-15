@@ -93,6 +93,50 @@ Build and test:
 ./mvnw test
 ```
 
+## Run with Docker Compose
+
+From the repository root run:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- frontend: `http://localhost:3005`
+- backend health endpoint: `http://localhost:8000/api/actuator/health`
+
+This local Docker setup includes:
+
+- PostgreSQL
+- Spring Boot backend
+- Vite frontend
+
+This local Docker setup intentionally does not include:
+
+- Firebase authentication
+- DigitalOcean Spaces / object storage
+- outbound email delivery
+
+Local Docker notes:
+
+- the backend starts with `FIREBASE_ENABLED=false`
+- the backend starts with `OBJECT_STORAGE_ENABLED=false`
+- the frontend can boot without Firebase keys, but Firebase-backed login and signup flows will not work until real Firebase configuration is added
+- the frontend proxies `/api` requests to the backend container
+
+To stop the stack:
+
+```bash
+docker compose down
+```
+
+To also remove the local Postgres volume:
+
+```bash
+docker compose down -v
+```
+
 ## Environment
 
 Use the included `.env.example` files as templates:

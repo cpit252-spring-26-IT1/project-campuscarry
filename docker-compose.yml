@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: certifiedcarry-db
+    environment:
+      POSTGRES_DB: certifiedcarry_backend
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - certifiedcarry-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d certifiedcarry_backend"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    container_name: certifiedcarry-backend
+    build:
+      context: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8000
+      DB_URL: jdbc:postgresql://db:5432/certifiedcarry_backend
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      FIREBASE_ENABLED: "false"
+      OBJECT_STORAGE_ENABLED: "false"
+      NOTIFICATIONS_EMAIL_ENABLED: "false"
+      SECURITY_CORS_ALLOWED_ORIGINS: http://localhost:3005,http://127.0.0.1:3005
+    ports:
+      - "8000:8000"
+
+  frontend:
+    container_name: certifiedcarry-frontend
+    build:
+      context: ./frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: /api
+      VITE_API_TIMEOUT_MS: 15000
+      VITE_DEV_PROXY_TARGET: http://backend:8000
+      VITE_ENABLE_EMAIL_VERIFICATION_BYPASS: "false"
+    ports:
+      - "3005:3005"
+    volumes:
+      - ./frontend:/app
+      - certifiedcarry-frontend-node-modules:/app/node_modules
+
+volumes:
+  certifiedcarry-postgres-data:
+  certifiedcarry-frontend-node-modules:
